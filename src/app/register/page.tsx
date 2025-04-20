@@ -1,19 +1,15 @@
 'use client'
 
-import {
-  Box,
-  Button,
-  Container,
-  TextField,
-  Typography,
-  Paper,
-  Alert,
-  IconButton,
-  InputAdornment,
-} from '@mui/material'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Eye, EyeOff } from 'lucide-react'
+import { Container } from '@/components/ui/container'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -74,95 +70,136 @@ export default function RegisterPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          ユーザー登録
-        </Typography>
+    <Container>
+      <Card className="w-full max-w-xl mx-auto mt-12">
+        <CardHeader>
+          <CardTitle>ユーザー登録</CardTitle>
+        </CardHeader>
 
-        <Box display="flex" flexDirection="column" gap={2}>
-          {error && <Alert severity="error">{error}</Alert>}
-          {success && <Alert severity="success">{success}</Alert>}
-          <TextField
-            label="ユーザー名 *"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            fullWidth
-            error={!!fieldErrors.username}
-            helperText={fieldErrors.username?.[0]}
-          />
-          <TextField
-            label="メールアドレス *"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            fullWidth
-            error={!!fieldErrors.email}
-            helperText={fieldErrors.email?.[0]}
-          />
-          <TextField
-            label="パスワード *（半角英数字8文字以上）"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            fullWidth
-            error={!!fieldErrors.password || (!!password && !isPasswordValid)}
-            helperText={
-              fieldErrors.password?.[0] ||
-              (!!password && !isPasswordValid ? '半角英数字で8文字以上にしてください' : '')
-            }
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword(prev => !prev)} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            label="パスワード（確認用） *"
-            type={showConfirmPassword ? 'text' : 'password'}
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            fullWidth
-            error={
-              !!fieldErrors.password_confirm || (!!confirmPassword && password !== confirmPassword)
-            }
-            helperText={
-              fieldErrors.password_confirm?.[0] ||
-              (!!confirmPassword && password !== confirmPassword ? 'パスワードが一致しません' : '')
-            }
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowConfirmPassword(prev => !prev)} edge="end">
-                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            label="姓（任意）"
-            value={lastName}
-            onChange={e => setLastName(e.target.value)}
-            fullWidth
-            error={!!fieldErrors.last_name}
-            helperText={fieldErrors.last_name?.[0]}
-          />
-          <TextField
-            label="名（任意）"
-            value={firstName}
-            onChange={e => setFirstName(e.target.value)}
-            fullWidth
-            error={!!fieldErrors.first_name}
-            helperText={fieldErrors.first_name?.[0]}
-          />
+        <CardContent className="flex flex-col gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>エラー</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {success && (
+            <Alert variant="default" className="border-green-500 bg-green-50 text-green-800">
+              <AlertTitle>成功</AlertTitle>
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid gap-1">
+            <Label htmlFor="username">ユーザー名 *</Label>
+            <Input
+              id="username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              required
+              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
+            />
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="email">メールアドレス *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
+            />
+            {fieldErrors.email && <p className="text-sm text-red-500">{fieldErrors.email[0]}</p>}
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="password">パスワード *（半角英数字8文字以上）</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className={`focus-visible:ring-1 focus-visible:ring-ring border border-input ${
+                  !!password && !isPasswordValid ? 'border-red-500' : ''
+                }`}
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2"
+                onClick={() => setShowPassword(prev => !prev)}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
+            </div>
+            {fieldErrors.password && (
+              <p className="text-sm text-red-500">{fieldErrors.password[0]}</p>
+            )}
+            {!!password && !isPasswordValid && !fieldErrors.password && (
+              <p className="text-sm text-red-500">半角英数字で8文字以上にしてください</p>
+            )}
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="confirmPassword">パスワード（確認用） *</Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className={`focus-visible:ring-1 focus-visible:ring-ring border border-input ${
+                  !!confirmPassword && password !== confirmPassword ? 'border-red-500' : ''
+                }`}
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2"
+                onClick={() => setShowConfirmPassword(prev => !prev)}
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
+            </div>
+            {fieldErrors.password_confirm && (
+              <p className="text-sm text-red-500">{fieldErrors.password_confirm[0]}</p>
+            )}
+            {!!confirmPassword && password !== confirmPassword && !fieldErrors.password_confirm && (
+              <p className="text-sm text-red-500">パスワードが一致しません</p>
+            )}
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="lastName">姓（任意）</Label>
+            <Input
+              id="lastName"
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
+            />
+            {fieldErrors.last_name && (
+              <p className="text-sm text-red-500">{fieldErrors.last_name[0]}</p>
+            )}
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="firstName">名（任意）</Label>
+            <Input
+              id="firstName"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
+            />
+            {fieldErrors.first_name && (
+              <p className="text-sm text-red-500">{fieldErrors.first_name[0]}</p>
+            )}
+          </div>
 
           <Button
-            variant="contained"
             onClick={handleRegister}
             disabled={
               !username ||
@@ -175,8 +212,8 @@ export default function RegisterPage() {
           >
             登録する
           </Button>
-        </Box>
-      </Paper>
+        </CardContent>
+      </Card>
     </Container>
   )
 }

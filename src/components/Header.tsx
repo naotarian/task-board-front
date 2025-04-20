@@ -1,86 +1,85 @@
 'use client'
 
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  IconButton,
-  Tooltip,
-  Popover,
-  Button,
-} from '@mui/material'
-import { AccountCircle, Login as LoginIcon } from '@mui/icons-material'
-import { useUser } from '@/context/UserContext'
-import { useRouter } from 'next/navigation'
-import { useLogout } from '@/hooks/useLogout'
 import { useState } from 'react'
-
+import { useRouter } from 'next/navigation'
+import { useUser } from '@/context/UserContext'
+import { useLogout } from '@/hooks/useLogout'
+import Link from 'next/link'
+import { LogInIcon } from 'lucide-react'
+import { PopoverContent } from '@/components/ui/popover'
+import { PopoverTrigger } from '@/components/ui/popover'
+import { Popover } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 export const Header = () => {
   const { user, loading } = useUser()
   const logout = useLogout()
   const router = useRouter()
+  const [popoverOpen, setPopoverOpen] = useState(false)
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  if (loading) return null
 
-  const handleIconClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handlePopoverClose = () => {
-    setAnchorEl(null)
-  }
-
-  const handleGoLogin = () => {
-    router.push('/login')
-  }
-
-  const open = Boolean(anchorEl)
-  if (loading) return <></>
   return (
-    <AppBar position="static">
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
-        <Typography variant="h6">TaskBoard</Typography>
+    <header className="bg-primary text-primary-foreground shadow-sm">
+      <div className="mx-auto px-4 py-3 flex justify-between items-center px-4 sm:px-6 lg:px-8">
+        <h1 className="text-lg font-semibold">
+          <Link href="/">TaskBoard</Link>
+        </h1>
 
-        <Box display="flex" alignItems="center">
+        <div className="flex items-center gap-4">
           {user ? (
-            <>
-              <Tooltip title="アカウントメニュー">
-                <IconButton color="inherit" onClick={handleIconClick}>
-                  <AccountCircle />
-                </IconButton>
-              </Tooltip>
+            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Avatar className="cursor-pointer w-8 h-8 border border-white/40 bg-muted text-white">
+                  <AvatarFallback className="w-full h-full flex items-center justify-center rounded-full bg-zinc-700 text-white font-semibold text-sm leading-none">
+                    {user.name?.[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </PopoverTrigger>
 
-              <Popover
-                open={open}
-                anchorEl={anchorEl}
-                onClose={handlePopoverClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
+              <PopoverContent
+                className="w-64 animate-in fade-in zoom-in-95 duration-200 shadow-md"
+                sideOffset={8}
               >
-                <Box sx={{ p: 2, minWidth: 180 }}>
-                  <Typography sx={{ mb: 1 }}>{user.name} さんとしてログイン中</Typography>
-                  <Button variant="outlined" color="error" fullWidth onClick={() => logout()}>
-                    ログアウト
+                <div className="p-4 border-b">
+                  <p className="text-sm text-muted-foreground">ログイン中</p>
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                </div>
+
+                <div className="p-2 flex flex-col gap-1">
+                  {/* 今後メニューを追加する箇所 */}
+                  <Button
+                    variant="ghost"
+                    className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
+                    onClick={() => router.push('/dashboard')}
+                  >
+                    ダッシュボード
                   </Button>
-                </Box>
-              </Popover>
-            </>
+
+                  <Button
+                    variant="ghost"
+                    className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
+                    onClick={() => router.push('/settings')}
+                  >
+                    設定
+                  </Button>
+
+                  <div className="border-t pt-2">
+                    <Button variant="outline" className="w-full" onClick={() => logout()}>
+                      ログアウト
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           ) : (
-            <Tooltip title="ログイン">
-              <IconButton color="inherit" onClick={handleGoLogin}>
-                <LoginIcon />
-              </IconButton>
-            </Tooltip>
+            <Button variant="ghost" onClick={() => router.push('/login')} size="icon">
+              <LogInIcon className="w-6 h-6" />
+              <span className="sr-only">ログイン</span>
+            </Button>
           )}
-        </Box>
-      </Toolbar>
-    </AppBar>
+        </div>
+      </div>
+    </header>
   )
 }

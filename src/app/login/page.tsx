@@ -5,20 +5,22 @@ import { useUser } from '@/context/UserContext'
 import { publicFetch, authFetch } from '@/lib/fetcher'
 
 import { useState } from 'react'
-import { Box, Button, Container, TextField, Typography, Paper, Alert } from '@mui/material'
-import { useRouter } from 'next/navigation'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Typography } from '@/components/ui/typography'
+import { Card, CardContent } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function LoginPage() {
   const { loading, shouldRender } = useRedirectIfAuthenticated('/')
   const { setUser } = useUser()
-  const router = useRouter()
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   const handleLogin = async () => {
-    setError('') // 前回のエラークリア
+    setError('')
 
     try {
       const tokenRes = await publicFetch('/token', {
@@ -45,7 +47,6 @@ export default function LoginPage() {
       }
 
       const me = await meRes.json()
-
       setUser({
         id: me.id,
         name: me.username,
@@ -53,69 +54,69 @@ export default function LoginPage() {
       })
 
       window.location.href = '/'
-      // router.push("/");
-    } catch (err: any) {
-      setError(err.message || 'ログイン中にエラーが発生しました')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('不明なエラーが発生しました')
+        console.error('Unexpected error:', err)
+      }
     }
   }
 
   if (loading || !shouldRender) return null
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          ログイン
-        </Typography>
-
-        <Box display="flex" flexDirection="column" gap={2}>
-          <TextField
-            label="ユーザー名"
-            type="email"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="パスワード"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            fullWidth
-          />
-
-          {error && <Alert severity="error">{error}</Alert>}
-
-          <Button variant="contained" onClick={handleLogin}>
+    <div className="flex justify-center items-center min-h-screen mt-[-60px]">
+      <Card className="w-full max-w-md p-6">
+        <CardContent className="space-y-6">
+          <Typography as="h2" className="text-center">
             ログイン
-          </Button>
+          </Typography>
 
-          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-            <a
-              href="/forgot-password"
-              style={{
-                color: '#1976d2',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-              }}
-            >
-              パスワードをお忘れですか？
-            </a>
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-            <a
-              href="/register"
-              style={{
-                color: '#1976d2',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-              }}
-            >
-              アカウントをお持ちでない方はこちら
-            </a>
-          </Typography>
-        </Box>
-      </Paper>
-    </Container>
+          <div className="space-y-4">
+            <div>
+              <Input
+                type="text"
+                placeholder="ユーザー名"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Input
+                type="password"
+                placeholder="パスワード"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button onClick={handleLogin} className="w-full">
+              ログイン
+            </Button>
+
+            <Typography as="p" muted className="text-center">
+              <a href="/forgot-password" className="text-primary underline hover:opacity-80">
+                パスワードをお忘れですか？
+              </a>
+            </Typography>
+
+            <Typography as="p" muted className="text-center">
+              <a href="/register" className="text-primary underline hover:opacity-80">
+                アカウントをお持ちでない方はこちら
+              </a>
+            </Typography>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
