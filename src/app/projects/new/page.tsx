@@ -22,7 +22,7 @@ export default function ProjectCreatePage() {
       data.append('description', formData.description)
       if (formData.thumbnail) data.append('thumbnail', formData.thumbnail)
 
-      const res = await fetch('http://localhost:8000/api/projects/', {
+      const res = await fetch('http://localhost:8000/api/projects/create/', {
         method: 'POST',
         body: data,
         headers: {

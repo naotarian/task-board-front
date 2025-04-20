@@ -1,35 +1,52 @@
 'use client'
 
-import { Typography, Container, Button } from '@mui/material'
-import { authFetch } from '@/lib/fetcher'
-import { useUser } from '@/context/UserContext'
+import { useEffect, useState } from 'react'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
+import { fetchProjects, Project } from '@/lib/api/projects'
+import { ProjectCard } from '@/app/ProjectCard'
+import { Container } from '@/components/ui/container'
+import { Loader2 } from 'lucide-react'
 
 export default function Home() {
-  const { loading, shouldRender } = useAuthGuard('/login')
-  const { setUser } = useUser()
-  const userFetch = async () => {
-    try {
-      const res = await authFetch('/me')
-      if (!res.ok) {
-        throw new Error('ユーザー情報の取得に失敗しました')
+  const { loading: authLoading, shouldRender } = useAuthGuard('/login')
+  const [projects, setProjects] = useState<Project[]>([])
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const data = await fetchProjects()
+        setProjects(data)
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message)
+        }
+      } finally {
+        setIsLoading(false)
       }
-      const me = await res.json()
-      setUser({
-        id: me.id,
-        name: me.username,
-        verified_at: me.verified_at,
-      })
-    } catch (err) {
-      console.error(err)
     }
-  }
-  if (loading || !shouldRender) return null
+
+    loadProjects()
+  }, [])
+
+  if (authLoading || !shouldRender) return null
+
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4">タスク管理アプリてきなやつ作るンゴ</Typography>
-      <Typography sx={{ mt: 2 }}>んごんごんごんごんごんごんごんごんごんごんごんごぉぉぉ</Typography>
-      <Button onClick={userFetch}>ユーザー情報取得</Button>
+    <Container className="mt-10">
+      {isLoading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="animate-spin w-6 h-6 text-muted-foreground" />
+        </div>
+      ) : projects.length === 0 ? (
+        <p className="text-muted-foreground">プロジェクトがありません。</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mx-auto">
+          {projects.map(project => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
+        </div>
+      )}
     </Container>
   )
 }
