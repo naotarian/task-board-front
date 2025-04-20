@@ -1,42 +1,34 @@
-"use client";
-import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
-import { publicFetch } from "@/lib/fetcher";
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  TextField,
-  Typography,
-  Alert,
-} from "@mui/material";
-import { useState } from "react";
+'use client'
+import { useRedirectIfAuthenticated } from '@/hooks/useRedirectIfAuthenticated'
+import { publicFetch } from '@/lib/fetcher'
+import { Box, Button, Container, Paper, TextField, Typography, Alert } from '@mui/material'
+import { useState } from 'react'
 
 export default function ForgotPasswordPage() {
-  const { loading, shouldRender } = useRedirectIfAuthenticated("/");
-  const [identifier, setIdentifier] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const { loading, shouldRender } = useRedirectIfAuthenticated('/')
+  const [identifier, setIdentifier] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   const handleSubmit = async () => {
-    setMessage("");
-    setError("");
+    setMessage('')
+    setError('')
 
-    const res = await publicFetch("/password-reset/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await publicFetch('/password-reset/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: identifier }),
-    });
+    })
 
     if (res.ok) {
-      setMessage("パスワードリセット用のメールを送信しました。");
-      setIdentifier("");
+      setMessage('パスワードリセット用のメールを送信しました。')
+      setIdentifier('')
     } else {
-      const data = await res.json();
-      setError(data.error || "送信に失敗しました");
+      const data = await res.json()
+      setError(data.error || '送信に失敗しました')
     }
-  };
-  if (loading || !shouldRender) return null;
+  }
+  if (loading || !shouldRender) return null
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
       <Paper sx={{ p: 4 }}>
@@ -52,14 +44,10 @@ export default function ForgotPasswordPage() {
           <TextField
             label="メールアドレスまたはユーザー名"
             value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
+            onChange={e => setIdentifier(e.target.value)}
             fullWidth
           />
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={!identifier}
-          >
+          <Button variant="contained" onClick={handleSubmit} disabled={!identifier}>
             送信する
           </Button>
 
@@ -68,5 +56,5 @@ export default function ForgotPasswordPage() {
         </Box>
       </Paper>
     </Container>
-  );
+  )
 }

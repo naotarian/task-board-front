@@ -1,55 +1,48 @@
-"use client";
+'use client'
 
-import {
-  Container,
-  Paper,
-  Typography,
-  Box,
-  Button,
-  Alert,
-} from "@mui/material";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useLogout } from "@/hooks/useLogout";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { authFetch } from "@/lib/fetcher";
+import { Container, Paper, Typography, Box, Button, Alert } from '@mui/material'
+import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useLogout } from '@/hooks/useLogout'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
+import { authFetch } from '@/lib/fetcher'
 
 export default function RegisterSuccessPage() {
-  const { loading, shouldRender } = useAuthGuard("/login");
-  const searchParams = useSearchParams();
-  const username = searchParams.get("username") || "";
+  const { loading, shouldRender } = useAuthGuard('/login')
+  const searchParams = useSearchParams()
+  const username = searchParams.get('username') || ''
 
-  const [resentLoading, setResentLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const logout = useLogout();
+  const [resentLoading, setResentLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const logout = useLogout()
 
   const handleResend = async () => {
-    setResentLoading(true);
-    setMessage("");
-    setError("");
+    setResentLoading(true)
+    setMessage('')
+    setError('')
 
     try {
-      const res = await authFetch("/resend-verification/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await authFetch('/resend-verification/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (res.ok) {
-        setMessage("再送信しました！メールをご確認ください。");
+        setMessage('再送信しました！メールをご確認ください。')
       } else {
-        setError(data.error || "再送信に失敗しました。");
+        setError(data.error || '再送信に失敗しました。')
       }
     } catch {
-      setError("サーバーに接続できませんでした。");
+      setError('サーバーに接続できませんでした。')
     } finally {
-      setResentLoading(false);
+      setResentLoading(false)
     }
-  };
-  if (loading || !shouldRender) return null;
+  }
+  if (loading || !shouldRender) return null
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
       <Paper sx={{ p: 4 }}>
@@ -74,16 +67,12 @@ export default function RegisterSuccessPage() {
         )}
 
         <Box mt={4} display="flex" justifyContent="center" gap={2}>
-          <Button
-            variant="contained"
-            onClick={handleResend}
-            disabled={resentLoading}
-          >
+          <Button variant="contained" onClick={handleResend} disabled={resentLoading}>
             認証メールを再送する
           </Button>
           <Button onClick={() => logout()}>ログアウト</Button>
         </Box>
       </Paper>
     </Container>
-  );
+  )
 }

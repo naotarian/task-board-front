@@ -1,14 +1,14 @@
-import "./globals.css";
-import { ReactNode } from "react";
-import { UserProvider } from "@/context/UserContext";
-import { Header } from "@/components/Header";
-import { CssBaseline } from "@mui/material";
-import { UserProviderWrapper } from "@/components/UserProviderWrapper";
+import './globals.css'
+import { ReactNode } from 'react'
+import { UserProvider } from '@/context/UserContext'
+import { Header } from '@/components/Header'
+import { CssBaseline } from '@mui/material'
+import { UserProviderWrapper } from '@/components/UserProviderWrapper'
 
 export const metadata = {
-  title: "TaskBoard",
-  description: "MUI × App Router × Context のサンプル",
-};
+  title: 'TaskBoard',
+  description: 'MUI × App Router × Context のサンプル',
+}
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -21,5 +21,5 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </UserProvider>
       </body>
     </html>
-  );
+  )
 }

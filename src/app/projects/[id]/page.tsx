@@ -1,55 +1,50 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import {
-  Box,
-  Container,
-  Typography,
-  CircularProgress,
-  Alert,
-  Paper,
-} from "@mui/material";
-import Image from "next/image";
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { Box, Container, Typography, CircularProgress, Alert, Paper } from '@mui/material'
+import Image from 'next/image'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 export default function ProjectDetailPage() {
-  const { id } = useParams();
-  const [project, setProject] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  useAuthGuard('/login')
+  const { id } = useParams()
+  const [project, setProject] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchProject = async () => {
       try {
         const res = await fetch(`http://localhost:8000/api/projects/${id}/`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
-        });
+        })
 
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "プロジェクトの取得に失敗しました。");
+          const data = await res.json()
+          throw new Error(data.error || 'プロジェクトの取得に失敗しました。')
         }
 
-        const data = await res.json();
-        setProject(data);
+        const data = await res.json()
+        setProject(data)
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchProject();
-  }, [id]);
+    fetchProject()
+  }, [id])
 
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" mt={8}>
         <CircularProgress />
       </Box>
-    );
+    )
   }
 
   if (error) {
@@ -57,7 +52,7 @@ export default function ProjectDetailPage() {
       <Container maxWidth="sm" sx={{ mt: 8 }}>
         <Alert severity="error">{error}</Alert>
       </Container>
-    );
+    )
   }
 
   return (
@@ -67,8 +62,8 @@ export default function ProjectDetailPage() {
         sx={{
           p: 4,
           borderRadius: 3,
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          bgcolor: "#fff",
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          bgcolor: '#fff',
         }}
       >
         {/* サムネイル + タイトル 横並び */}
@@ -78,9 +73,9 @@ export default function ProjectDetailPage() {
               sx={{
                 width: 100,
                 height: 60,
-                overflow: "hidden",
+                overflow: 'hidden',
                 borderRadius: 2,
-                border: "1px solid #eee",
+                border: '1px solid #eee',
                 flexShrink: 0,
               }}
             >
@@ -89,21 +84,21 @@ export default function ProjectDetailPage() {
                 alt="Thumbnail"
                 width={100}
                 height={60}
-                style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
               />
             </Box>
           )}
 
-          <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             {project.name}
           </Typography>
         </Box>
 
         {/* 説明 */}
         <Typography variant="body1" color="text.secondary">
-          {project.description || "説明なし"}
+          {project.description || '説明なし'}
         </Typography>
       </Paper>
     </Container>
-  );
+  )
 }
