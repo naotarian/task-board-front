@@ -1,9 +1,18 @@
 'use client'
 
-import Cropper from 'react-easy-crop'
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, Slider } from '@mui/material'
 import { useState } from 'react'
-import { getCroppedImg } from '@/utils/cropImage' // ← utils に別ファイルで後述
+import Cropper from 'react-easy-crop'
+import { getCroppedImg } from '@/utils/cropImage'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
 
 type Props = {
   open: boolean
@@ -24,32 +33,41 @@ export const ImageCropDialog = ({ open, image, onClose, onComplete }: Props) => 
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>画像のトリミング</DialogTitle>
-      <DialogContent sx={{ position: 'relative', height: 300 }}>
-        <Cropper
-          image={image}
-          crop={crop}
-          zoom={zoom}
-          aspect={4 / 3} // 表示比率に合わせて調整可能
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
-        />
-        <Slider
-          value={zoom}
-          min={1}
-          max={3}
-          step={0.1}
-          onChange={(_, value) => setZoom(value as number)}
-        />
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>画像のトリミング</DialogTitle>
+        </DialogHeader>
+
+        <div className="relative w-full h-[300px] bg-muted rounded-md overflow-hidden">
+          <Cropper
+            image={image}
+            crop={crop}
+            zoom={zoom}
+            aspect={4 / 3}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+          />
+        </div>
+
+        <div className="mt-4">
+          <Slider
+            value={[zoom]}
+            onValueChange={val => setZoom(val[0])}
+            min={1}
+            max={3}
+            step={0.1}
+          />
+        </div>
+
+        <DialogFooter className="mt-4">
+          <Button variant="ghost" onClick={onClose}>
+            キャンセル
+          </Button>
+          <Button onClick={handleCropComplete}>トリミングして確定</Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>キャンセル</Button>
-        <Button onClick={handleCropComplete} variant="contained">
-          トリミングして確定
-        </Button>
-      </DialogActions>
     </Dialog>
   )
 }

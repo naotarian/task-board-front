@@ -59,9 +59,9 @@ export const Header = () => {
                   <Button
                     variant="ghost"
                     className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
-                    onClick={() => router.push('/settings')}
+                    onClick={() => router.push('/settings/profile')}
                   >
-                    設定
+                    個人設定
                   </Button>
 
                   <div className="border-t pt-2">
