@@ -1,145 +1,107 @@
 'use client'
+
 import { useRedirectIfAuthenticated } from '@/hooks/useRedirectIfAuthenticated'
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  TextField,
-  Typography,
-  Alert,
-  IconButton,
-  InputAdornment,
-} from '@mui/material'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
-import { useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { publicFetch } from '@/lib/fetcher'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Loader2 } from 'lucide-react'
+
+import { FullScreenLoader } from '@/components/common/FullScreenLoader'
+import { useResetPasswordForm } from '@/hooks/passwordReset/useResetPasswordForm'
 
 export default function ResetPasswordPage() {
   const { loading, shouldRender } = useRedirectIfAuthenticated('/')
-  const searchParams = useSearchParams()
-  const uid = searchParams.get('uid')
-  const token = searchParams.get('token')
-
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const router = useRouter()
-
-  const isValidPassword = /^[a-zA-Z0-9]{8,}$/.test(password)
-
-  const handleSubmit = async () => {
-    setMessage('')
-    setError('')
-
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません')
-      return
-    }
-
-    if (!isValidPassword) {
-      setError('パスワードの形式が正しくありません')
-      return
-    }
-
-    const res = await publicFetch('/password-reset-confirm/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        uid,
-        token,
-        new_password: password,
-      }),
-    })
-
-    const data = await res.json()
-
-    if (res.ok) {
-      setMessage('パスワードをリセットしました。ログイン画面へ移動します。')
-      setTimeout(() => router.push('/login'), 3000)
-    } else {
-      setError(data.error || 'パスワードのリセットに失敗しました。')
-    }
-  }
+  const {
+    uid,
+    token,
+    password,
+    confirmPassword,
+    showLoader,
+    successMessage,
+    errorMessage,
+    resetCompleted,
+    isValidPassword,
+    setPassword,
+    setConfirmPassword,
+    handleSubmit,
+  } = useResetPasswordForm()
 
   if (!uid || !token) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Alert severity="error">不正なURLです。</Alert>
-      </Container>
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <Alert variant="destructive">
+          <AlertDescription>不正なURLです。</AlertDescription>
+        </Alert>
+      </div>
     )
   }
 
   if (loading || !shouldRender) return null
 
-  return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          新しいパスワードを設定
-        </Typography>
+  if (resetCompleted) {
+    return <FullScreenLoader message="パスワードをリセットしました。ログイン画面へ移動します..." />
+  }
 
-        <Box display="flex" flexDirection="column" gap={2}>
-          <TextField
-            label="新しいパスワード"
-            type={showPassword ? 'text' : 'password'}
+  return (
+    <div className="flex min-h-[calc(100svh-60px)] items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center">新しいパスワードを設定</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            placeholder="新しいパスワード"
+            type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            fullWidth
-            error={!!password && !isValidPassword}
-            helperText={
-              !!password && !isValidPassword ? '半角英数字8文字以上で入力してください' : ''
-            }
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword(prev => !prev)} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+            className={!!password && !isValidPassword ? 'border-red-500' : ''}
           />
+          {password && !isValidPassword && (
+            <p className="text-sm text-red-500">半角英数字8文字以上で入力してください</p>
+          )}
 
-          <TextField
-            label="確認用パスワード"
-            type={showConfirm ? 'text' : 'password'}
+          <Input
+            placeholder="確認用パスワード"
+            type="password"
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
-            fullWidth
-            error={!!confirmPassword && password !== confirmPassword}
-            helperText={
-              !!confirmPassword && password !== confirmPassword ? 'パスワードが一致しません' : ''
-            }
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowConfirm(prev => !prev)} edge="end">
-                    {showConfirm ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+            className={!!confirmPassword && password !== confirmPassword ? 'border-red-500' : ''}
           />
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-sm text-red-500">パスワードが一致しません</p>
+          )}
 
           <Button
-            variant="contained"
             onClick={handleSubmit}
+            className="w-full"
             disabled={
-              !password || !confirmPassword || password !== confirmPassword || !isValidPassword
+              !password ||
+              !confirmPassword ||
+              password !== confirmPassword ||
+              !isValidPassword ||
+              showLoader
             }
           >
-            パスワードを変更する
+            {showLoader ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              'パスワードを変更する'
+            )}
           </Button>
 
-          {message && <Alert severity="success">{message}</Alert>}
-          {error && <Alert severity="error">{error}</Alert>}
-        </Box>
-      </Paper>
-    </Container>
+          {successMessage && (
+            <Alert variant="default">
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+          )}
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

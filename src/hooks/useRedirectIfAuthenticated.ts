@@ -11,10 +11,8 @@ export const useRedirectIfAuthenticated = (redirectTo = '/') => {
   useEffect(() => {
     if (!loading && user) {
       if (!user.verified_at) {
-        console.log('未認証 → メール認証ページにリダイレクト')
         router.replace(`/register/success?username=${user.name}`)
       } else {
-        console.log('認証済 → 通常ページにリダイレクト')
         router.replace(redirectTo)
       }
     }

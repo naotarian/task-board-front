@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') || ''
-  const subdomain = host.replace('.localhost:3000', '')
+  const subdomain = host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, '')
   const domain = process.env.DOMAIN || ''
   // サブドメインがない場合はスルー
   if (subdomain === domain) {
@@ -22,10 +22,8 @@ export async function middleware(request: NextRequest) {
   })
 
   if (res.status !== 200) {
-    console.log(res.status)
     // サブドメイン存在しなければ404にリダイレクト
-    console.log('サブドメインが存在しません')
-    return NextResponse.redirect(new URL('http://localhost:3000/404', request.url))
+    return NextResponse.redirect(new URL(process.env.NEXT_PUBLIC_APP_URL + '/404', request.url))
   }
 
   return NextResponse.next()

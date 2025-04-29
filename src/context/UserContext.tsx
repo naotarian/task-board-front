@@ -2,60 +2,77 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-type User = {
+export type User = {
   id: string
   name: string
   verified_at: string | null
+  organizations: Array<{
+    id: string
+    name: string
+    subdomain: string
+    logo: string | null
+    roles: Array<{
+      name: string
+      display_name: string
+    }>
+  }>
 }
 
 type UserContextType = {
   user: User | null
   setUser: (user: User | null) => void
   loading: boolean
+  statusCode: number | null
+  setStatusCode: (code: number | null) => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [statusCode, setStatusCode] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  // ✅ 初回マウント時にログイン状態を復元
+
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('access_token')
-      if (!token) {
-        setLoading(false)
-        return
-      }
-
       try {
-        const res = await fetch('http://localhost/api/me/', {
+        const res = await fetch('https://localhost/api/me/', {
+          credentials: 'include',
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-subdomain': window.location.host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, ''),
           },
         })
 
+        setStatusCode(res.status)
         if (res.ok) {
           const data = await res.json()
           setUser({
             id: data.id,
             name: data.username,
             verified_at: data.verified_at,
+            organizations: data.organizations,
           })
         } else {
-          localStorage.removeItem('access_token')
+          setUser(null)
         }
       } catch (err) {
-        console.error('ユーザー取得失敗', err)
+        console.error('Error fetching user:', err)
+        setStatusCode(null)
+        setUser(null)
       } finally {
-        setLoading(false) // ← 最後に false にする
+        setLoading(false)
       }
     }
 
     fetchUser()
   }, [])
 
-  return <UserContext.Provider value={{ user, setUser, loading }}>{children}</UserContext.Provider>
+  return (
+    <UserContext.Provider value={{ user, setUser, loading, statusCode, setStatusCode }}>
+      {children}
+    </UserContext.Provider>
+  )
 }
 
 export const useUser = () => {

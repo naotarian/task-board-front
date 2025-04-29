@@ -1,78 +1,57 @@
 'use client'
 
-import { Container, Paper, Typography, Box, Button, Alert } from '@mui/material'
-import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { useLogout } from '@/hooks/useLogout'
-import { useAuthGuard } from '@/hooks/useAuthGuard'
-import { authFetch } from '@/lib/fetcher'
+import { useRegisterSuccess } from '@/hooks/userRegisterSuccess/useRegisterSuccess'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Container } from '@/components/ui/container'
+import { Loader2 } from 'lucide-react'
 
 export default function RegisterSuccessPage() {
-  const { loading, shouldRender } = useAuthGuard('/login')
-  const searchParams = useSearchParams()
-  const username = searchParams.get('username') || ''
+  const { loading, shouldRender, message, error, resentLoading, handleResend, handleLogout } =
+    useRegisterSuccess()
 
-  const [resentLoading, setResentLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const logout = useLogout()
-
-  const handleResend = async () => {
-    setResentLoading(true)
-    setMessage('')
-    setError('')
-
-    try {
-      const res = await authFetch('/resend-verification/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        setMessage('再送信しました！メールをご確認ください。')
-      } else {
-        setError(data.error || '再送信に失敗しました。')
-      }
-    } catch {
-      setError('サーバーに接続できませんでした。')
-    } finally {
-      setResentLoading(false)
-    }
-  }
   if (loading || !shouldRender) return null
+
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          メールアドレス確認のお願い ✉️
-        </Typography>
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          登録したメールアドレス宛に確認メールを送信しました。
-          <br />
-          認証リンクをクリックして登録を完了してください。
-        </Typography>
+    <Container>
+      <Card className="w-full max-w-lg mx-auto mt-12">
+        <CardHeader>
+          <CardTitle className="text-center">メールアドレス確認のお願い ✉️</CardTitle>
+        </CardHeader>
 
-        {message && (
-          <Alert severity="success" sx={{ mt: 2 }}>
-            {message}
-          </Alert>
-        )}
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
+        <CardContent className="space-y-6">
+          <p className="text-muted-foreground text-center">
+            登録したメールアドレス宛に確認メールを送信しました。
+            <br />
+            認証リンクをクリックして登録を完了してください。
+          </p>
 
-        <Box mt={4} display="flex" justifyContent="center" gap={2}>
-          <Button variant="contained" onClick={handleResend} disabled={resentLoading}>
-            認証メールを再送する
-          </Button>
-          <Button onClick={() => logout()}>ログアウト</Button>
-        </Box>
-      </Paper>
+          {message && (
+            <Alert variant="success">
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex justify-center gap-2">
+            <Button onClick={handleResend} disabled={resentLoading}>
+              {resentLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                '認証メールを再送する'
+              )}
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              ログアウト
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </Container>
   )
 }

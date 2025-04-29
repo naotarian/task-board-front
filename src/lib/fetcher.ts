@@ -1,55 +1,70 @@
 import { API_BASE_URL } from '@/lib/constants'
-export const refreshAccessToken = async (): Promise<string | null> => {
-  const refreshToken = localStorage.getItem('refresh_token')
-  if (!refreshToken) return null
 
+// ★ リフレッシュリクエスト（Cookieベース）
+export const refreshAccessToken = async (): Promise<boolean> => {
   const res = await fetch(`${API_BASE_URL}/token/refresh/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh: refreshToken }),
+    credentials: 'include', // ★ Cookieを必ず送る！！
+    headers: {
+      'Content-Type': 'application/json',
+    },
   })
 
-  if (!res.ok) {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    return null
-  }
-
-  const data = await res.json()
-  localStorage.setItem('access_token', data.access)
-  return data.access
+  return res.ok
 }
 
+// ★ 認証が必要なfetch
 export const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const token = localStorage.getItem('access_token')
+  const getCookie = (name: string) => {
+    if (typeof document === 'undefined') return null
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) return parts.pop()?.split(';').shift()
+  }
 
-  const res = await fetch(API_BASE_URL + url + '/', {
+  const csrftoken = getCookie('csrftoken')
+  let res = await fetch(API_BASE_URL + url + '/', {
     ...options,
+    credentials: 'include',
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken || '',
     },
   })
 
   if (res.status !== 401) return res
 
-  // アクセストークン切れ → refresh 試行
-  const newToken = await refreshAccessToken()
-  if (!newToken) return res
+  // アクセストークン期限切れ → リフレッシュを試行
+  const refreshed = await refreshAccessToken()
 
-  // トークン更新後に再試行
-  return await fetch(API_BASE_URL + url + '/', {
+  if (!refreshed) {
+    return res // リフレッシュ失敗 → 元の401を返す
+  }
+
+  // 再度リトライ
+  res = await fetch(API_BASE_URL + url + '/', {
     ...options,
+    credentials: 'include', // ★ 再リトライでもCookie送信
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${newToken}`,
+      'Content-Type': 'application/json',
     },
   })
+
+  return res
 }
 
-// 認証不要な共通 fetch（ログイン・新規登録など）
-export const publicFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  return await fetch(API_BASE_URL + url + '/', {
+// ★ 認証不要なfetch（ログイン・新規登録など）
+export const publicFetch = async (
+  url: string,
+  options: RequestInit = {},
+  stripTrailingSlash: boolean = false
+): Promise<Response> => {
+  const finalUrl = stripTrailingSlash
+    ? API_BASE_URL + url
+    : API_BASE_URL + (url.endsWith('/') ? url : url + '/')
+  return await fetch(finalUrl, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

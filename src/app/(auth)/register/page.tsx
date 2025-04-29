@@ -1,72 +1,43 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-
+import { useRegisterForm } from '@/hooks/UserRegister/useRegisterForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Container } from '@/components/ui/container'
+import { FullScreenLoader } from '@/components/common/FullScreenLoader'
 
 export default function RegisterPage() {
-  const router = useRouter()
+  const {
+    username,
+    setUsername,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    showPassword,
+    setShowPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    isPasswordValid,
+    error,
+    success,
+    loading,
+    fieldErrors,
+    handleRegister,
+  } = useRegisterForm()
 
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
-
-  const isPasswordValid = /^[a-zA-Z0-9]{8,}$/.test(password)
-
-  const handleRegister = async () => {
-    setError('')
-    setSuccess('')
-    setFieldErrors({})
-
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません。')
-      return
-    }
-
-    if (!isPasswordValid) {
-      setError('パスワードは半角英数字で8文字以上にしてください。')
-      return
-    }
-
-    const res = await fetch('http://localhost:8000/api/register/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username,
-        email,
-        password,
-        password_confirm: confirmPassword,
-        first_name: firstName,
-        last_name: lastName,
-      }),
-    })
-
-    const data = await res.json()
-
-    if (res.ok) {
-      setSuccess('登録が完了しました。認証メールを送信しました。')
-      setTimeout(() => router.push(`/register/success?username=${username}`), 3000)
-    } else {
-      setFieldErrors(data)
-      setError('入力内容に誤りがあります。')
-    }
+  if (success) {
+    return <FullScreenLoader message="登録が完了しました。認証メールを送信しました..." />
   }
 
   return (
@@ -84,7 +55,7 @@ export default function RegisterPage() {
             </Alert>
           )}
           {success && (
-            <Alert variant="default" className="border-green-500 bg-green-50 text-green-800">
+            <Alert variant="success">
               <AlertTitle>成功</AlertTitle>
               <AlertDescription>{success}</AlertDescription>
             </Alert>
@@ -97,19 +68,12 @@ export default function RegisterPage() {
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
-              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
             />
           </div>
 
           <div className="grid gap-1">
             <Label htmlFor="email">メールアドレス *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
-            />
+            <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
             {fieldErrors.email && <p className="text-sm text-red-500">{fieldErrors.email[0]}</p>}
           </div>
 
@@ -121,9 +85,7 @@ export default function RegisterPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className={`focus-visible:ring-1 focus-visible:ring-ring border border-input ${
-                  !!password && !isPasswordValid ? 'border-red-500' : ''
-                }`}
+                className={!!password && !isPasswordValid ? 'border-red-500' : ''}
               />
               <Button
                 type="button"
@@ -151,9 +113,9 @@ export default function RegisterPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
-                className={`focus-visible:ring-1 focus-visible:ring-ring border border-input ${
+                className={
                   !!confirmPassword && password !== confirmPassword ? 'border-red-500' : ''
-                }`}
+                }
               />
               <Button
                 type="button"
@@ -175,12 +137,7 @@ export default function RegisterPage() {
 
           <div className="grid gap-1">
             <Label htmlFor="lastName">姓（任意）</Label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={e => setLastName(e.target.value)}
-              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
-            />
+            <Input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} />
             {fieldErrors.last_name && (
               <p className="text-sm text-red-500">{fieldErrors.last_name[0]}</p>
             )}
@@ -188,12 +145,7 @@ export default function RegisterPage() {
 
           <div className="grid gap-1">
             <Label htmlFor="firstName">名（任意）</Label>
-            <Input
-              id="firstName"
-              value={firstName}
-              onChange={e => setFirstName(e.target.value)}
-              className="focus-visible:ring-1 focus-visible:ring-ring border border-input"
-            />
+            <Input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} />
             {fieldErrors.first_name && (
               <p className="text-sm text-red-500">{fieldErrors.first_name[0]}</p>
             )}
@@ -207,10 +159,11 @@ export default function RegisterPage() {
               !password ||
               !confirmPassword ||
               password !== confirmPassword ||
-              !isPasswordValid
+              !isPasswordValid ||
+              loading
             }
           >
-            登録する
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : '登録する'}
           </Button>
         </CardContent>
       </Card>

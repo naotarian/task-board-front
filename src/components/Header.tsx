@@ -11,6 +11,7 @@ import { PopoverTrigger } from '@/components/ui/popover'
 import { Popover } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import OrganizationLinks from '@/components/OrganizationsLinks'
 export const Header = () => {
   const { user, loading } = useUser()
   const logout = useLogout()
@@ -47,23 +48,30 @@ export const Header = () => {
                 </div>
 
                 <div className="p-2 flex flex-col gap-1">
-                  {/* 今後メニューを追加する箇所 */}
-                  <Button
-                    variant="ghost"
-                    className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
-                    onClick={() => router.push('/dashboard')}
-                  >
-                    ダッシュボード
-                  </Button>
+                  {user?.organizations && user.organizations.length > 0 ? (
+                    <OrganizationLinks user={user} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">組織に参加していません</p>
+                  )}
+                  <div className="border-t pt-2">
+                    <p className="text-sm text-muted-foreground mb-2">メニュ</p>
+                    {/* 今後メニューを追加する箇所 */}
+                    <Button
+                      variant="ghost"
+                      className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
+                      onClick={() => router.push('/dashboard')}
+                    >
+                      ダッシュボード
+                    </Button>
 
-                  <Button
-                    variant="ghost"
-                    className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
-                    onClick={() => router.push('/settings/profile')}
-                  >
-                    個人設定
-                  </Button>
-
+                    <Button
+                      variant="ghost"
+                      className="justify-start w-full border-none focus-visible:ring-0 hover:bg-accent"
+                      onClick={() => router.push('/settings/profile')}
+                    >
+                      個人設定
+                    </Button>
+                  </div>
                   <div className="border-t pt-2">
                     <Button variant="outline" className="w-full" onClick={() => logout()}>
                       ログアウト

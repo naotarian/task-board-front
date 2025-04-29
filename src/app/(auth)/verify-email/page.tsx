@@ -1,64 +1,49 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Box, CircularProgress, Container, Paper, Typography, Alert, Button } from '@mui/material'
+import { useVerifyEmail } from '@/hooks/verifyEmail/useVerifyEmail'
+import { FullScreenLoader } from '@/components/common/FullScreenLoader'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Typography } from '@/components/ui/typography'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const uid = searchParams.get('uid')
   const token = searchParams.get('token')
+  const router = useRouter()
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [errorMessage, setErrorMessage] = useState('')
+  const { status, errorMessage } = useVerifyEmail(uid, token)
 
-  useEffect(() => {
-    if (!uid || !token) {
-      setStatus('error')
-      setErrorMessage('URLが無効です。')
-      return
-    }
-
-    const verifyEmail = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/verify-email/?uid=${uid}&token=${token}`)
-        if (res.ok) {
-          setStatus('success')
-        } else {
-          const data = await res.json()
-          setStatus('error')
-          setErrorMessage(data.error || '認証に失敗しました。')
-        }
-      } catch (err) {
-        setStatus('error')
-        setErrorMessage('サーバーへの接続に失敗しました。')
-      }
-    }
-
-    verifyEmail()
-  }, [uid, token])
-
+  if (status === 'loading') {
+    return <FullScreenLoader message="メール認証中です..." />
+  }
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4 }}>
-        {status === 'loading' && (
-          <Box display="flex" justifyContent="center">
-            <CircularProgress />
-          </Box>
-        )}
-        {status === 'success' && (
-          <>
-            <Typography variant="h5" gutterBottom>
-              メールアドレスの認証が完了しました 🎉
-            </Typography>
-            <Button variant="contained" onClick={() => router.push('/login')}>
-              ログイン画面へ
-            </Button>
-          </>
-        )}
-        {status === 'error' && <Alert severity="error">{errorMessage}</Alert>}
-      </Paper>
-    </Container>
+    <div className="flex min-h-[calc(100svh-60px)] items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center">
+            {status === 'success' ? '認証完了 🎉' : '認証エラー'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {status === 'success' ? (
+            <>
+              <Typography as="p" className="text-center text-muted-foreground">
+                メールアドレスの認証が完了しました！
+              </Typography>
+              <Button className="w-full" onClick={() => router.push('/login')}>
+                TOP
+              </Button>
+            </>
+          ) : (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

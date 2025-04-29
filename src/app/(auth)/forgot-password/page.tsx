@@ -1,60 +1,61 @@
 'use client'
+
 import { useRedirectIfAuthenticated } from '@/hooks/useRedirectIfAuthenticated'
-import { publicFetch } from '@/lib/fetcher'
-import { Box, Button, Container, Paper, TextField, Typography, Alert } from '@mui/material'
-import { useState } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Typography } from '@/components/ui/typography'
+import { useForgotPasswordForm } from '@/hooks/forgotPassword/useForgotPasswordForm'
+import { Loader2 } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
-  const { loading, shouldRender } = useRedirectIfAuthenticated('/')
-  const [identifier, setIdentifier] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const { loading: authLoading, shouldRender } = useRedirectIfAuthenticated('/')
+  const { identifier, setIdentifier, message, error, loading, handleSubmit } =
+    useForgotPasswordForm()
 
-  const handleSubmit = async () => {
-    setMessage('')
-    setError('')
+  if (authLoading || !shouldRender) return null
 
-    const res = await publicFetch('/password-reset/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: identifier }),
-    })
-
-    if (res.ok) {
-      setMessage('パスワードリセット用のメールを送信しました。')
-      setIdentifier('')
-    } else {
-      const data = await res.json()
-      setError(data.error || '送信に失敗しました')
-    }
-  }
-  if (loading || !shouldRender) return null
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          パスワードを忘れた方
-        </Typography>
+    <div className="flex min-h-[calc(100svh-60px)] items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <Card className="shadow-md">
+          <CardContent className="space-y-6">
+            <div className="text-center space-y-2">
+              <Typography as="p" muted className="font-bold">
+                パスワードを忘れた方
+              </Typography>
+              <Typography as="p" muted>
+                登録済みのメールアドレスまたはユーザー名を入力してください。
+              </Typography>
+            </div>
 
-        <Typography variant="body2" mb={2}>
-          登録済みのメールアドレスまたはユーザー名を入力してください。
-        </Typography>
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="メールアドレスまたはユーザー名"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+              />
 
-        <Box display="flex" flexDirection="column" gap={2}>
-          <TextField
-            label="メールアドレスまたはユーザー名"
-            value={identifier}
-            onChange={e => setIdentifier(e.target.value)}
-            fullWidth
-          />
-          <Button variant="contained" onClick={handleSubmit} disabled={!identifier}>
-            送信する
-          </Button>
+              <Button className="w-full" onClick={handleSubmit} disabled={!identifier || loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : '送信する'}
+              </Button>
 
-          {message && <Alert severity="success">{message}</Alert>}
-          {error && <Alert severity="error">{error}</Alert>}
-        </Box>
-      </Paper>
-    </Container>
+              {message && (
+                <Alert variant="success">
+                  <AlertDescription>{message}</AlertDescription>
+                </Alert>
+              )}
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }
