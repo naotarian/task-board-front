@@ -1,52 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
-import { fetchProjects, Project } from '@/lib/api/projects'
-import { ProjectCard } from '@/app/ProjectCard'
 import { Container } from '@/components/ui/container'
-import { Loader2 } from 'lucide-react'
+import { OrganizationCardList } from '@/app/components/OrganizationCardList'
+import { ProjectCardList } from '@/app/components/ProjectCardList'
+import { ActivityList } from '@/app/components/ActivityList'
+import { FullScreenLoader } from '@/components/common/FullScreenLoader'
+import { useSubdomain } from '@/hooks/useSubdomain'
 
-export default function Home() {
-  const { loading: authLoading, shouldRender } = useAuthGuard('/login')
-  const [projects, setProjects] = useState<Project[]>([])
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
+export default function ProjectSelectionPage() {
+  const { loading, shouldRender } = useAuthGuard('/login')
+  const subdomain = useSubdomain()
+  console.log('subdomain', subdomain)
+  const hasSubdomain = !!subdomain
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const data = await fetchProjects()
-        setProjects(data)
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message)
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadProjects()
-  }, [])
-
-  if (authLoading || !shouldRender) return null
+  if (loading || !shouldRender) return <FullScreenLoader />
 
   return (
-    <Container className="mt-10">
-      {isLoading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin w-6 h-6 text-muted-foreground" />
+    <Container className="py-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          {!hasSubdomain && <OrganizationCardList />}
+          <ProjectCardList />
         </div>
-      ) : projects.length === 0 ? (
-        <p className="text-muted-foreground">プロジェクトがありません。</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mx-auto">
-          {projects.map(project => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      )}
+        <ActivityList />
+      </div>
     </Container>
   )
 }
