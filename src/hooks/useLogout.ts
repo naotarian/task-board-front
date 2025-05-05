@@ -11,12 +11,12 @@ export const useLogout = () => {
       const host = window.location.host
       const subdomain = host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, '')
       const res = await publicFetch('/logout', {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-subdomain': subdomain,
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
         },
-        credentials: 'include',
       })
       if (!res.ok) {
         console.error('ログアウトAPI呼び出し失敗', res.status)

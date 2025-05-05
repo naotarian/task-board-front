@@ -4,9 +4,9 @@ import { API_BASE_URL } from '@/lib/constants'
 export const refreshAccessToken = async (): Promise<boolean> => {
   const res = await fetch(`${API_BASE_URL}/token/refresh/`, {
     method: 'POST',
-    credentials: 'include', // ★ Cookieを必ず送る！！
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
   })
 
@@ -15,21 +15,15 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 
 // ★ 認証が必要なfetch
 export const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const getCookie = (name: string) => {
-    if (typeof document === 'undefined') return null
-    const value = `; ${document.cookie}`
-    const parts = value.split(`; ${name}=`)
-    if (parts.length === 2) return parts.pop()?.split(';').shift()
-  }
-
-  const csrftoken = getCookie('csrftoken')
+  const token = localStorage.getItem('auth_token')
+  console.log(token)
   let res = await fetch(API_BASE_URL + url + '/', {
     ...options,
-    credentials: 'include',
     headers: {
       ...options.headers,
       'Content-Type': 'application/json',
-      'X-CSRFToken': csrftoken || '',
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
     },
   })
 
@@ -56,18 +50,12 @@ export const authFetch = async (url: string, options: RequestInit = {}): Promise
 }
 
 // ★ 認証不要なfetch（ログイン・新規登録など）
-export const publicFetch = async (
-  url: string,
-  options: RequestInit = {},
-  stripTrailingSlash: boolean = false
-): Promise<Response> => {
-  const finalUrl = stripTrailingSlash
-    ? API_BASE_URL + url
-    : API_BASE_URL + (url.endsWith('/') ? url : url + '/')
-  return await fetch(finalUrl, {
+export const publicFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  return await fetch(API_BASE_URL + url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
       ...options.headers,
     },
   })

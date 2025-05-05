@@ -42,10 +42,13 @@ export const useRegisterForm = () => {
       setLoading(false)
       return
     }
-
+    const host = window.location.host
+    const subdomain = host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, '')
     const res = await publicFetch('/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'x-subdomain': subdomain,
+      },
       body: JSON.stringify({
         username,
         email,

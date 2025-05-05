@@ -36,21 +36,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch('https://localhost/api/me/', {
-          credentials: 'include',
+        const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+        const res = await fetch(`${API_URL}/me`, {
           headers: {
             'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
             'x-subdomain': window.location.host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, ''),
           },
         })
-
         setStatusCode(res.status)
         if (res.ok) {
           const data = await res.json()
           setUser({
             id: data.id,
-            name: data.username,
-            verified_at: data.verified_at,
+            name: data.name,
+            verified_at: data.email_verified_at,
             organizations: data.organizations,
           })
         } else {

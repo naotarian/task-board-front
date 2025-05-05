@@ -11,7 +11,6 @@ import { useSubdomain } from '@/hooks/useSubdomain'
 export default function ProjectSelectionPage() {
   const { loading, shouldRender } = useAuthGuard('/login')
   const subdomain = useSubdomain()
-  console.log('subdomain', subdomain)
   const hasSubdomain = !!subdomain
 
   if (loading || !shouldRender) return <FullScreenLoader />

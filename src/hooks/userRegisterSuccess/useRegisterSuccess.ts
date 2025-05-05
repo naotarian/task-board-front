@@ -22,9 +22,9 @@ export const useRegisterSuccess = () => {
     setError('')
 
     try {
-      const res = await authFetch('/resend-verification', {
+      const res = await authFetch('/email/verification-notification', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ username }),
       })
 
@@ -33,7 +33,12 @@ export const useRegisterSuccess = () => {
       if (res.ok) {
         setMessage('再送信しました！メールをご確認ください。')
       } else {
-        setError(data.error || '再送信に失敗しました。')
+        if (data.alreadyVerified) {
+          window.location.href = '/login'
+          return
+        } else {
+          setError(data.message || '再送信に失敗しました。')
+        }
       }
     } catch {
       setError('サーバーに接続できませんでした。')

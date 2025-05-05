@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { publicFetch, authFetch } from '@/lib/fetcher'
+import { publicFetch } from '@/lib/fetcher'
 import { useUser } from '@/context/UserContext'
-
 export const useLoginForm = () => {
   const { setUser } = useUser()
   const [username, setUsername] = useState('')
@@ -15,13 +14,13 @@ export const useLoginForm = () => {
     try {
       const host = window.location.host
       const subdomain = host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, '')
-
       const tokenRes = await publicFetch('/login', {
         method: 'POST',
         headers: {
           'x-subdomain': subdomain,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ username, password }),
       })
 
@@ -30,25 +29,17 @@ export const useLoginForm = () => {
         console.error('Login failed:', data)
         throw new Error('ログインに失敗しました。ユーザー名またはパスワードが正しくありません。')
       }
+      const data = await tokenRes.json()
+      const token = data.token
+      const user = data.user
 
-      const meRes = await authFetch('/me', {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-subdomain': subdomain,
-        },
-        credentials: 'include',
-      })
+      localStorage.setItem('auth_token', token)
 
-      if (!meRes.ok) {
-        throw new Error('ユーザー情報の取得に失敗しました')
-      }
-
-      const me = await meRes.json()
       setUser({
-        id: me.id,
-        name: me.username,
-        verified_at: me.verified_at,
-        organizations: me.organizations,
+        id: user.id,
+        name: user.name,
+        verified_at: user.email_verified_at,
+        organizations: user.organizations,
       })
 
       window.location.href = '/'

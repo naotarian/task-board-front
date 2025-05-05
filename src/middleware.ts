@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  return NextResponse.next()
   const host = request.headers.get('host') || ''
   const subdomain = host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, '')
   const domain = process.env.DOMAIN || ''
