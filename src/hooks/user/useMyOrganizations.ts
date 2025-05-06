@@ -19,10 +19,11 @@ export const useMyOrganizations = () => {
   useEffect(() => {
     const fetchOrgs = async () => {
       try {
-        const res = await authFetch('/user/organizations')
+        const res = await authFetch('/organizations')
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || '取得に失敗しました')
-        setOrganizations(data)
+        console.log(data.organizations)
+        setOrganizations(data.organizations)
       } catch (e: any) {
         setError(e.message)
       } finally {

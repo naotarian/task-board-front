@@ -16,7 +16,6 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 // ★ 認証が必要なfetch
 export const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const token = localStorage.getItem('auth_token')
-  console.log(token)
   let res = await fetch(API_BASE_URL + url + '/', {
     ...options,
     headers: {

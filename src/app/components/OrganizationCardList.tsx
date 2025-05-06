@@ -1,16 +1,27 @@
 'use client'
 
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
 import Image from 'next/image'
 import { useMyOrganizations } from '@/hooks/user/useMyOrganizations'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useRouter } from 'next/navigation'
 
 export const OrganizationCardList = () => {
-  const { organizations, loading, error } = useMyOrganizations()
+  const { organizations, loading } = useMyOrganizations()
+  const router = useRouter()
 
-  const getOrgUrl = (org: { id: string; name: string; subdomain: string }) => {
-    return `https://${org.subdomain}.${process.env.NEXT_PUBLIC_BASE_DOMAIN}`
+  const handleOrgClick = (org: { id: string; name: string; subdomain: string }) => {
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      alert('トークンが見つかりません。再ログインしてください。')
+      return
+    }
+
+    const targetUrl = new URL(`http://${org.subdomain}.${process.env.NEXT_PUBLIC_BASE_DOMAIN}`)
+    targetUrl.searchParams.set('token', token)
+
+    // ページ遷移（サブドメインへ）
+    window.location.href = targetUrl.toString()
   }
 
   return (
@@ -28,6 +39,7 @@ export const OrganizationCardList = () => {
             </CardHeader>
           </Card>
         ))}
+
       {!loading && organizations.length === 0 && (
         <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
           <p className="font-medium text-base mb-1">所属組織はありません</p>
@@ -36,7 +48,11 @@ export const OrganizationCardList = () => {
       )}
 
       {organizations.map(org => (
-        <Card key={org.id} className="h-16 py-2 hover:shadow-sm transition rounded-none">
+        <Card
+          key={org.id}
+          className="h-16 py-2 hover:shadow-sm transition rounded-none cursor-pointer"
+          onClick={() => handleOrgClick(org)}
+        >
           <CardHeader className="pb-1 flex flex-row items-center gap-3">
             {org.thumbnail ? (
               <Image
@@ -52,10 +68,8 @@ export const OrganizationCardList = () => {
               </div>
             )}
             <div className="flex flex-col gap-0.5">
-              <CardTitle className="text-base leading-tight">
-                <Link href={getOrgUrl(org)} className="underline text-primary hover:opacity-80">
-                  {org.name}
-                </Link>
+              <CardTitle className="text-base leading-tight underline text-primary hover:opacity-80">
+                {org.name}
               </CardTitle>
             </div>
           </CardHeader>

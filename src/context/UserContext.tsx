@@ -1,6 +1,8 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { authFetch } from '@/lib/fetcher'
 
 export type User = {
   id: string
@@ -32,42 +34,93 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [statusCode, setStatusCode] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const subdomain =
+    typeof window !== 'undefined'
+      ? window.location.host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, '')
+      : ''
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const initUser = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
-        const res = await fetch(`${API_URL}/me`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-            'x-subdomain': window.location.host.replace(process.env.NEXT_PUBLIC_SUB_REPLACE!, ''),
-          },
-        })
-        setStatusCode(res.status)
-        if (res.ok) {
-          const data = await res.json()
-          setUser({
-            id: data.id,
-            name: data.name,
-            verified_at: data.email_verified_at,
-            organizations: data.organizations,
+        const queryToken = searchParams.get('token')
+        const token = queryToken ? decodeURIComponent(queryToken) : null
+        if (token) {
+          // トークン交換リクエスト
+          const res = await fetch(`/api/token-exchange`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              'x-subdomain': subdomain,
+            },
           })
+          setStatusCode(res.status)
+
+          if (res.ok) {
+            const data = await res.json()
+            const token = data.token
+            localStorage.setItem('auth_token', token)
+            setUser({
+              id: data.user.id,
+              name: data.user.name,
+              verified_at: data.user.email_verified_at,
+              organizations: data.user.organizations,
+            })
+
+            // クエリパラメータを消す（URLを綺麗に）
+            const newUrl =
+              window.location.pathname + window.location.search.replace(/token=[^&]+&?/, '')
+            window.history.replaceState({}, '', newUrl.replace(/[\?&]$/, ''))
+          } else {
+            setUser(null)
+          }
         } else {
-          setUser(null)
+          // 通常の /me リクエスト
+          const token = localStorage.getItem('auth_token')
+          if (!token) {
+            setUser(null)
+            setStatusCode(401)
+            return
+          }
+
+          const res = await authFetch(`/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              'x-subdomain': subdomain,
+            },
+          })
+
+          setStatusCode(res.status)
+
+          if (res.ok) {
+            const data = await res.json()
+            setUser({
+              id: data.id,
+              name: data.name,
+              verified_at: data.email_verified_at,
+              organizations: data.organizations,
+            })
+          } else {
+            setUser(null)
+          }
         }
       } catch (err) {
         console.error('Error fetching user:', err)
-        setStatusCode(null)
         setUser(null)
+        setStatusCode(null)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUser()
-  }, [])
+    initUser()
+  }, [searchParams, subdomain])
 
   return (
     <UserContext.Provider value={{ user, setUser, loading, statusCode, setStatusCode }}>
